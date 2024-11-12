@@ -1,0 +1,36 @@
+<!-- check_reviews.html -->
+{% extends "base.html" %}
+
+{% block title %}Check Reviews{% endblock %}
+
+{% block content %}
+<h2>Reviews for Paper: {{ paper.title }}</h2>
+
+<div id="review-list">
+    {% for review in reviews %}
+        <div class="review-entry">
+            <h3>Review by Reviewer ID: {{ review.reviewer_id }}</h3>
+            <p><strong>Rating:</strong> {{ review.rating }}</p>
+            <p><strong>Comments:</strong> {{ review.comments }}</p>
+            <p><strong>Date:</strong> {{ review.date }}</p>
+        </div>
+        <hr>
+    {% endfor %}
+</div>
+
+<h3>Add Admin Comment</h3>
+<form method="POST" action="{{ url_for('admin_add_comment', paper_id=paper.id) }}">
+    <textarea name="admin_comment" placeholder="Write your comment here..."></textarea>
+    <button type="submit">Submit Comment</button>
+</form>
+{% endblock %}
+    
+<h3>Admin Action:</h3>
+<form method="POST">
+    <button type="submit" name="action" value="approve">Approve</button>
+    <button type="submit" name="action" value="needs revision">Request Revision</button>
+    <button type="submit" name="action" value="reject">Reject</button>
+</form>
+    <a href="{{ url_for('home') }}">Back</a>
+</body>
+</html>

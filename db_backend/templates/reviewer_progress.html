@@ -1,0 +1,27 @@
+<!-- reviewer_progress.html -->
+{% extends "base.html" %}
+
+{% block title %}Reviewer Paper Progress{% endblock %}
+
+{% block content %}
+<h2>My Review Assignments</h2>
+
+<table>
+    <tr>
+        <th>Researcher ID</th>
+        <th>Paper ID</th>
+        <th>Title</th>
+        <th>Status</th>
+        <th>Add Review</th>
+    </tr>
+    {% for paper in assigned_papers %}
+    <tr>
+        <td>{{ paper.researcher_id }}</td>
+        <td>{{ paper.id }}</td>
+        <td>{{ paper.title }}</td>
+        <td>{{ paper.status }}</td>
+        <td><a href="{{ url_for('add_review', paper_id=paper.id) }}">Add Review</a></td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}

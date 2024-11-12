@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submit Paper</title>
+    {{ ckeditor.load() }}
+</head>
+<body>
+    <h1>Submit Your Paper</h1>
+
+    <!-- Form to Submit the Paper -->
+    <form method="POST" action="{{ url_for('submit_paper') }}">
+        <!-- Title Field -->
+        <label for="title">Title:</label>
+        <input type="text" id="title" name="title" required placeholder="Enter the title of your paper" style="width: 100%; margin-bottom: 20px;">
+
+        
+    <!-- Selecting Themes -->
+        <label for="themes">Select a theme that best describes the area of interest of your paper:</label><br>
+        <input type="radio" name="theme" value="Natural Science" id="natural_science">
+        <label for="natural_science">Natural Science</label><br>
+        <input type="radio" name="theme" value="Social Science" id="social_science">
+        <label for="social_science">Social Science</label><br>
+        <input type="radio" name="theme" value="Formal Science" id="formal_science">
+        <label for="formal_science">Formal Science</label><br>
+
+
+    <!-- CKEditor Textarea Field for Paper Content -->
+        <label for="content">Paper Content:</label>
+        {{ ckeditor.create(name='content') }}
+        
+        <!-- Submit Button -->
+        <button type="submit" style="margin-top: 20px;">Submit</button>
+    </form>
+
+    <!-- Custom CKEditor Configuration -->
+    <script>
+        CKEDITOR.replace('content', {
+            toolbar: [
+                { name: 'basicstyles', items: ['Bold', 'Italic', 'Underline'] },
+                { name: 'paragraph', items: ['NumberedList', 'BulletedList', '-', 'JustifyLeft', 'JustifyCenter', 'JustifyRight'] },
+                { name: 'styles', items: ['Format'] },
+                { name: 'editing', items: ['Scayt'] }
+            ],
+            height: 400  // Set the height of the editor
+        });
+    </script>
+
+</body>
+</html>

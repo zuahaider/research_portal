@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+</head>
+<body>
+    <h1>Register</h1>
+    <form method="POST" action="{{ url_for('register') }}">
+        <input type="email" name="email" placeholder="Email" required>
+        <input type="password" name="password" placeholder="Password" required>
+        <input type="text" name="first_name" placeholder="First Name" required>
+        <input type="text" name="last_name" placeholder="Last Name" required>
+        <label for="preferences">Select Your Preferences:</label><br>
+
+    <input type="checkbox" name="preferences" value="Natural Science" id="natural_science">
+    <label for="natural_science">Natural Science</label><br>
+
+    <input type="checkbox" name="preferences" value="Social Science" id="social_science">
+    <label for="social_science">Social Science</label><br>
+
+    <input type="checkbox" name="preferences" value="Formal Science" id="formal_science">
+    <label for="formal_science">Formal Science</label><br>
+    <button type="submit">Register</button>
+    </form>
+    <a href="{{ url_for('login') }}">Already have an account? Login</a>
+</body>
+</html>
+
+{% with messages = get_flashed_messages(with_categories=True) %}
+    {% if messages %}
+        <ul>
+            {% for category, message in messages %}
+                <li class="flash {{ category }}">{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+{% endwith %}

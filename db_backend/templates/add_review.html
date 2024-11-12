@@ -1,0 +1,24 @@
+<!-- add_review.html -->
+{% extends "base.html" %}
+
+{% block title %}Add Review{% endblock %}
+
+{% block content %}
+<h2>Submit Review for Paper: {{ paper.title }}</h2>
+
+<form method="POST" action="{{ url_for('submit_review', paper_id=paper.id) }}">
+    <label for="rating">Rating:</label>
+    <select name="rating" required>
+        <option value="1">1 - Poor</option>
+        <option value="2">2 - Fair</option>
+        <option value="3">3 - Good</option>
+        <option value="4">4 - Very Good</option>
+        <option value="5">5 - Excellent</option>
+    </select>
+    
+    <label for="comments">Comments:</label>
+    <textarea name="comments" placeholder="Write your review comments here..." required></textarea>
+
+    <button type="submit">Submit Review</button>
+</form>
+{% endblock %}

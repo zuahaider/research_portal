@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile</title>
+</head>
+<body>
+    <h1>Welcome to your Profile</h1> 
+    <p>To keep a track of your paper progress. <a href="{{ url_for('my_progress') }}">My Progress</a></p>
+    <p>To Submit a paper. <a href="{{ url_for('submit_paper') }}">Submit a paper</a></p>
+    <p>To check your Drafts. <a href="{{ url_for('drafts') }}">My Drafts</a></p>
+</body>
+</html>
+

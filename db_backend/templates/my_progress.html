@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Progress</title>
+</head>
+<body>
+    <h2>My Progress</h2>
+
+    {% if current_user.role == 'admin' %}
+        <!-- Admin Table for All Submitted Papers -->
+        <h3>All Papers Submitted</h3>
+        <table class="table table-bordered table-striped">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Title</th>
+                    <th>Author</th>
+                    <th>Status</th>
+                    <th>Assign Reviewer</th>
+                    <th>Check Reviews</th>
+                    <th>Publish</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for paper in papers %}
+                <tr>
+                    <td>{{ paper.title }}</td>
+                    <td>{{ paper.author.first_name }} {{ paper.author.last_name }}</td>
+                    <td>{{ paper.status }}</td>
+                    <td>
+                        {% if paper.status == 'needs_reviewer' %}
+                        <a href="{{ url_for('assign_reviewer', paper_id=paper.paper_id) }}" class="btn btn-primary">Assign Reviewer</a>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if paper.status == 'under_review' and paper.assigned_reviewer_count == 3 %}
+                        <a href="{{ url_for('check_reviews', paper_id=paper.paper_id) }}" class="btn btn-info">Check Reviews</a>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if paper.status == 'approved' %}
+                        <form action="{{ url_for('publish_paper', paper_id=paper.paper_id) }}" method="post">
+                            <button type="submit" class="btn btn-success">Publish</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+    {% elif current_user.role == 'researcher' or current_user.role == 'reviewer' %}
+        <!-- Researcher's Table for Own Papers -->
+        <h3>Your Papers</h3>
+        <table class="table table-bordered table-striped">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Title</th>
+                    <th>Status</th>
+                    <th>Assigned Reviewers</th>
+                    <th>Reviews</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for paper in papers %}
+                <tr>
+                    <td>{{ paper.title }}</td>
+                    <td>{{ paper.status }}</td>
+                    <td>
+                        {% for review in paper.reviews %}
+                            <p>{{ review.reviewer.first_name }} {{ review.reviewer.last_name }}</p>
+                        {% endfor %}
+                    </td>
+                    <td>
+                        {% for review in paper.reviews %}
+                            <p>{{ review.content if review.content else "Pending" }}</p>
+                        {% endfor %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {% if current_user.role == 'reviewer' %}
+            <!-- Reviewer's Assigned Papers Table -->
+            <h3>Assigned Papers to Review</h3>
+            <table class="table table-bordered table-striped">
+                <thead class="thead-dark">
+                    <tr>
+                        <th>Title</th>
+                        <th>Author</th>
+                        <th>Status</th>
+                        <th>Review</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for assignment in assigned_papers %}
+                    <tr>
+                        <td>{{ assignment.paper.title }}</td>
+                        <td>{{ assignment.paper.author.first_name }} {{ assignment.paper.author.last_name }}</td>
+                        <td>{{ assignment.paper.status }}</td>
+                        <td>
+                            {% if assignment.paper.status == 'under_review' %}
+                            <a href="{{ url_for('review_paper', paper_id=assignment.paper.paper_id) }}" class="btn btn-warning">Submit Review</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+    {% endif %}
+</div>
+{% endblock %}
+</body>

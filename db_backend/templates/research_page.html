@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Research Papers</title>
+</head>
+<body>
+    <h1>Published Research Papers</h1>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <ul>
+                {% for category, message in messages %}
+                    <li class="flash-{{ category }}">{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Search and Filter Form -->
+    <form method="GET" action="{{ url_for('research_page') }}">
+        <input type="text" name="search" placeholder="Search by title, author, keyword" value="{{ request.args.get('search', '') }}">
+        
+        <label for="theme">Theme:</label>
+        <select name="theme">
+            <option value="">All</option>
+            <option value="Natural Science" {% if request.args.get('theme') == 'Natural Science' %}selected{% endif %}>Natural Science</option>
+            <option value="Social Science" {% if request.args.get('theme') == 'Social Science' %}selected{% endif %}>Social Science</option>
+            <option value="Formal Science" {% if request.args.get('theme') == 'Formal Science' %}selected{% endif %}>Formal Science</option>
+        </select>
+
+        <label for="sort_by_date">Sort by Date:</label>
+        <select name="sort_by_date">
+            <option value="latest" {% if request.args.get('sort_by_date') == 'latest' %}selected{% endif %}>Latest</option>
+            <option value="oldest" {% if request.args.get('sort_by_date') == 'oldest' %}selected{% endif %}>Oldest</option>
+        </select>
+
+        <button type="submit">Search</button>
+    </form>
+
+    <!-- Published Papers Table -->
+    {% if papers %}
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Author</th>
+                <th>Theme</th>
+                <th>Publish Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for paper in papers %}
+            <tr>
+                <td>{{ paper.title }}</td>
+                <td>{{ paper.author.first_name }} {{ paper.author.last_name }}</td>
+                <td>{{ paper.theme }}</td>
+                <td>{{ paper.publish_date.strftime('%Y-%m-%d') }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+        <p>No published papers found.</p>
+    {% endif %}
+
+    <!-- Login/Register Message -->
+    {% if not current_user.is_authenticated %}
+        <p>You need to be logged in to submit a paper. <a href="{{ url_for('login') }}">Login</a> | Don't have an account? <a href="{{ url_for('register') }}">Register</a></p>
+    {% else %}
+        <p>Welcome, {{ current_user.first_name }}! <a href="{{ url_for('logout') }}">Logout</a></p>
+    {% endif %}
+</body>
+</html>
