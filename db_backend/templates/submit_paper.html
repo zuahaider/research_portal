@@ -10,13 +10,12 @@
     <h1>Submit Your Paper</h1>
 
     <!-- Form to Submit the Paper -->
-    <form method="POST" action="{{ url_for('submit_paper') }}">
+    <form method="POST" action="{{ url_for('submit_paper') }}" enctype="multipart/form-data" onsubmit="return validateForm()">
         <!-- Title Field -->
         <label for="title">Title:</label>
         <input type="text" id="title" name="title" required placeholder="Enter the title of your paper" style="width: 100%; margin-bottom: 20px;">
 
-        
-    <!-- Selecting Themes -->
+        <!-- Selecting Themes -->
         <label for="themes">Select a theme that best describes the area of interest of your paper:</label><br>
         <input type="radio" name="theme" value="Natural Science" id="natural_science">
         <label for="natural_science">Natural Science</label><br>
@@ -25,13 +24,17 @@
         <input type="radio" name="theme" value="Formal Science" id="formal_science">
         <label for="formal_science">Formal Science</label><br>
 
-
-    <!-- CKEditor Textarea Field for Paper Content -->
+        <!-- CKEditor Textarea Field for Paper Content -->
         <label for="content">Paper Content:</label>
         {{ ckeditor.create(name='content') }}
-        
+
+        <!-- PDF Upload Section -->
+        <label for="pdf">Attachments, if any (PDF Only):</label><br>
+        <input type="file" id="pdf" name="pdf" accept=".pdf" style="margin-bottom: 20px;">
+
         <!-- Submit Button -->
         <button type="submit" style="margin-top: 20px;">Submit</button>
+        <button type="submit" onclick="document.getElementById('action').value='draft';" style="margin-left: 10px;">Save to Drafts</button>
     </form>
 
     <!-- Custom CKEditor Configuration -->
@@ -45,7 +48,30 @@
             ],
             height: 400  // Set the height of the editor
         });
-    </script>
 
+        // Client-side Validation Script
+        function validateForm() {
+            const title = document.getElementById('title').value.trim();
+            const theme = document.querySelector('input[name="theme"]:checked');
+            const content = CKEDITOR.instances.content.getData().trim();
+
+            if (!title) {
+                alert('Please fill in the Title field.');
+                return false;
+            }
+
+            if (!theme) {
+                alert('Please select a theme.');
+                return false;
+            }
+
+            if (!content) {
+                alert('Please fill in the Paper Content field.');
+                return false;
+            }
+
+            return true; // Form is valid
+        }
+    </script>
 </body>
 </html>

@@ -1,20 +1,22 @@
-<!-- drafts.html -->
-{% extends "base.html" %}
-
-{% block title %}My Drafts{% endblock %}
-
-{% block content %}
-<h2>My Drafts</h2>
-
-<div id="drafts-list">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Drafts</title>
+</head>
+<body>
+    <h1>My Drafts</h1>
     {% for draft in drafts %}
-        <div class="draft-entry">
+        <div>
             <h3>{{ draft.title }}</h3>
-            <p><strong>Date Saved:</strong> {{ draft.date_saved }}</p>
-            <a href="{{ url_for('edit_draft', draft_id=draft.id) }}">Edit</a>
-            <a href="{{ url_for('delete_draft', draft_id=draft.id) }}">Delete</a>
+            <p>Theme: {{ draft.theme }}</p>
+            <a href="{{ url_for('edit_draft', paper_id=draft.id) }}">Edit</a>
+            <form method="POST" action="{{ url_for('delete_draft', paper_id=draft.id) }}" style="display: inline;">
+                <button type="submit" onclick="return confirm('Are you sure you want to delete this draft?')">Delete</button>
+            </form>
         </div>
+        <hr>
     {% endfor %}
-</div>
-<a href="{{ url_for('submit_paper') }}">Create New Draft</a>
-{% endblock %}
+</body>
+</html>

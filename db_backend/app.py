@@ -3,8 +3,11 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from datetime import datetime
 from flask_ckeditor import CKEditor
+import os
 
 app = Flask(__name__)
+app.config['UPLOAD_FOLDER'] = r'C:\Users\Lenovo\Documents\SOFT_PROJECT\db_backend\uploads'
+app.config['ALLOWED_EXTENSIONS'] = {'pdf'}
 app.config['SECRET_KEY'] = 'my_secret_key'  
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///research_portal.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -40,7 +43,8 @@ class Paper(db.Model):
     author_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     theme = db.Column(db.String(100), nullable=False)
     publish_date = db.Column(db.DateTime, default=datetime.utcnow)
-    status = db.Column(db.String(100), default="needs reviewer")  # e.g., needs reviewer, approved, etc.
+    status = db.Column(db.String(100), default="draft")  
+    pdf_filename = db.Column(db.String(255), nullable=True)  # Optional
     reviewers = db.relationship('Review', backref='paper', lazy=True)
 
     def __repr__(self):
@@ -99,6 +103,10 @@ from flask import render_template, request, redirect, url_for, flash, session
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 
+def allowed_file(filename):
+    """Check if the uploaded file is a PDF."""
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
+
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
@@ -106,6 +114,7 @@ login_manager.login_view = 'login'
 def load_user(user_id):
     return User.query.get(int(user_id))
 
+@app.route('/', methods=['GET'])
 @app.route('/research_page', methods=['GET'])
 def research_page():
     search_query = request.args.get('search')
@@ -296,18 +305,112 @@ def my_progress():
 @app.route('/submit_paper', methods=['GET', 'POST'])
 def submit_paper():
     if request.method == 'POST':
+        # Extract form fields
         title = request.form.get('title')
+        theme = request.form.get('theme')
         content = request.form.get('content')  # Content from CKEditor
-        # Save the title and content to the database (not shown here)
+        action = request.form.get('action')  # Determines whether to submit or save as draft
 
-        flash('Paper submitted successfully!')
-        return redirect(url_for('my_profile'))
+        # Validate mandatory fields
+        if not title or not theme or not content.strip():
+            flash('Title, theme, and content are required.', 'error')
+            return redirect(url_for('submit_paper'))
+
+        # Handle optional file upload
+        file = request.files.get('pdf')
+        if file and not allowed_file(file.filename):
+            flash('Invalid file format. Please upload a PDF.', 'error')
+            return redirect(url_for('submit_paper'))
+
+        # Save the file if provided
+        filename = None
+        if file:
+            filename = f"{title.replace(' ', '_')}.pdf"
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            try:
+                file.save(file_path)
+            except OSError as e:
+                flash(f"Error saving file: {e}", 'error')
+                return redirect(url_for('submit_paper'))
+
+        # Determine the status: "draft" or "needs reviewer"
+        status = "needs reviewer" if action == "submit" else "draft"
+
+        # Create new Paper object
+        new_paper = Paper(
+            title=title,
+            theme=theme,
+            content=content,
+            author_id=current_user.id,
+            status=status,
+            pdf_filename=filename  # Store the filename if a PDF is uploaded
+        )
+
+        # Add to database
+        try:
+            db.session.add(new_paper)
+            db.session.commit()
+            if status == "draft":
+                flash('Paper saved to drafts successfully!', 'success')
+            else:
+                flash('Paper submitted successfully!', 'success')
+            return redirect(url_for('my_profile'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Error saving paper: {e}", 'error')
+            return redirect(url_for('submit_paper'))
+
+    # If GET request, render the form
     return render_template('submit_paper.html')
-
+    
 @app.route('/drafts')
 def drafts():
-    # Placeholder for drafts functionality
-    return "Drafts Page (Coming Soon)"
+    drafts = Paper.query.filter_by(author_id=current_user.id, status="draft").all()
+    return render_template('drafts.html', drafts=drafts)
+
+@app.route('/edit_draft/<int:paper_id>', methods=['GET', 'POST'])
+def edit_draft(paper_id):
+    paper = Paper.query.get_or_404(paper_id)
+    if paper.author_id != current_user.id or paper.status != "draft":
+        flash('Unauthorized access!', 'error')
+        return redirect(url_for('drafts'))
+
+    if request.method == 'POST':
+        paper.title = request.form.get('title')
+        paper.theme = request.form.get('theme')
+        paper.content = request.form.get('content')
+        action = request.form.get('action')
+
+        paper.status = "needs reviewer" if action == "submit" else "draft"
+        try:
+            db.session.commit()
+            if paper.status == "draft":
+                flash('Draft updated successfully!', 'success')
+            else:
+                flash('Paper submitted successfully!', 'success')
+            return redirect(url_for('my_profile'))
+        except Exception as e:
+            db.session.rollback()
+            flash('An error occurred. Please try again.', 'error')
+
+    return render_template('submit_paper.html', paper=paper)
+
+@app.route('/delete_draft/<int:paper_id>', methods=['POST'])
+def delete_draft(paper_id):
+    paper = Paper.query.get_or_404(paper_id)
+    if paper.author_id != current_user.id or paper.status != "draft":
+        flash('Unauthorized access!', 'error')
+        return redirect(url_for('drafts'))
+
+    try:
+        db.session.delete(paper)
+        db.session.commit()
+        flash('Draft deleted successfully!', 'success')
+        return redirect(url_for('view_drafts'))
+    except Exception as e:
+        db.session.rollback()
+        flash('An error occurred. Please try again.', 'error')
+
 
 if __name__ == '__main__':
     with app.app_context():
