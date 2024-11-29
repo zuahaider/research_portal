@@ -42,6 +42,7 @@ class Paper(db.Model):
     content = db.Column(db.Text, nullable=False)
     author_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     theme = db.Column(db.String(100), nullable=False)
+    submission_date = db.Column(db.DateTime, default=datetime.utcnow)
     publish_date = db.Column(db.DateTime, default=datetime.utcnow)
     status = db.Column(db.String(100), default="draft")  
     pdf_filename = db.Column(db.String(255), nullable=True)  # Optional
@@ -120,26 +121,25 @@ def research_page():
     search_query = request.args.get('search')
     author_query = request.args.get('author')
     theme_query = request.args.get('theme')
+    article_name = request.args.get('article_name')
     sort_by_date = request.args.get('sort_by_date', 'latest')
 
     # Query papers based on search/filter criteria
-    query = Paper.query
+    query = Paper.query.filter(Paper.status == 'published')  # Only show published papers
 
-    # Search by title/content
+    # Apply search filters
+    if article_name:
+        query = query.filter(Paper.title.contains(article_name))
+
     if search_query:
         query = query.filter(Paper.title.contains(search_query) | Paper.content.contains(search_query))
 
-    # Filter by author (first_name + last_name)
     if author_query:
-        first_name, last_name = author_query.split(" ", 1)
-        query = query.filter(Paper.author.first_name.like(f'%{first_name}%'),
-                             Paper.author.last_name.like(f'%{last_name}%'))
+        query = query.filter(Paper.author.first_name.like(f'%{author_query}%') | Paper.author.last_name.like(f'%{author_query}%'))
 
-    # Filter by theme
     if theme_query:
         query = query.filter(Paper.theme.contains(theme_query))
 
-    # Sorting by date
     if sort_by_date == 'latest':
         query = query.order_by(Paper.publish_date.desc())
     elif sort_by_date == 'oldest':
@@ -230,12 +230,21 @@ def login():
     
     return render_template('login.html')
 
+
+
 @app.route('/logout')
 def logout():
+    # Clear specific session keys or clear the entire session
     session.pop('user_id', None)
     session.pop('role', None)
-    flash("Logged out successfully.", "success")
-    return redirect(url_for('logout'))
+    
+    # Flash a logout success message
+    flash('Logged out successfully!', 'success')
+    
+    # Redirect to the login page
+    return redirect(url_for('login'))
+
+
 
 @app.route('/my_home', methods=['GET'])
 def my_home():
@@ -243,25 +252,23 @@ def my_home():
     author_query = request.args.get('author')
     theme_query = request.args.get('theme')
     sort_by_date = request.args.get('sort_by_date', 'latest')
+    article_name = request.args.get('article_name')
 
-    # Query papers based on search/filter criteria
-    query = Paper.query
 
-    # Search by title/content
+    query = Paper.query.filter(Paper.status == 'published')  # Only show published papers
+    
+    if article_name:
+        query = query.filter(Paper.title.contains(article_name))
+
     if search_query:
         query = query.filter(Paper.title.contains(search_query) | Paper.content.contains(search_query))
 
-    # Filter by author (first_name + last_name)
     if author_query:
-        first_name, last_name = author_query.split(" ", 1)
-        query = query.filter(Paper.author.first_name.like(f'%{first_name}%'),
-                             Paper.author.last_name.like(f'%{last_name}%'))
+        query = query.filter(Paper.author.first_name.like(f'%{author_query}%') | Paper.author.last_name.like(f'%{author_query}%'))
 
-    # Filter by theme
     if theme_query:
         query = query.filter(Paper.theme.contains(theme_query))
 
-    # Sorting by date
     if sort_by_date == 'latest':
         query = query.order_by(Paper.publish_date.desc())
     elif sort_by_date == 'oldest':
@@ -271,36 +278,32 @@ def my_home():
 
     return render_template('my_home.html', papers=papers)
 
+
 @app.route('/view_paper/<int:paper_id>', methods=['GET'])
 def view_paper(paper_id):
     paper = Paper.query.get_or_404(paper_id)
     return render_template('view_paper.html', paper=paper)
 
-@app.route('/my_profile', methods=['GET', 'POST'])
+@app.route('/my_profile')
 def my_profile():
-    return render_template('my_profile.html')
+    # Check if the user is logged in
+    if 'user_id' not in session:
+        flash("Please log in to access your profile.")
+        return redirect(url_for('login'))
 
-@app.route('/my_progress')
-def my_progress():
-    if current_user.role == 'admin':
-        # Admin view: see all papers and manage reviewers and publishing
-        papers = Paper.query.filter(Paper.status.in_(['needs_reviewer', 'under_review', 'needs_revision', 'approved'])).all()
-        all_users = User.query.filter(User.role != 'admin').all()  # To select reviewers
+    # Fetch the user from the database
+    user = User.query.get(session['user_id'])
+    
+    if not user:
+        flash("User not found!")
+        return redirect(url_for('login'))
+    
+    # Render the My Profile page with role-based visibility
+    return render_template('my_profile.html', user=user)
 
-    elif current_user.role == 'researcher' or current_user.role == 'reviewer':
-        # Researcher view: see their own papers
-        papers = Paper.query.filter_by(author_id=current_user.id).all()
-        # If the user is also a reviewer, fetch assigned papers
-        assigned_papers = None
-        if current_user.role == 'reviewer':
-            assigned_papers = ReviewerAssignment.query.filter_by(reviewer_id=current_user.id).all()
-
-    return render_template(
-        'my_progress.html',
-        papers=papers,
-        assigned_papers=assigned_papers if current_user.role == 'reviewer' else None,
-        all_users=all_users if current_user.role == 'admin' else None
-    )
+@app.route('/my_dashboard')
+def my_dashboard():
+   return render_template('my_dashboard.html')
 
 @app.route('/submit_paper', methods=['GET', 'POST'])
 def submit_paper():
@@ -410,6 +413,67 @@ def delete_draft(paper_id):
     except Exception as e:
         db.session.rollback()
         flash('An error occurred. Please try again.', 'error')
+
+@app.route('/admins_dashboard', methods=['GET'])
+def admins_dashboard():
+    # Get filters from the request arguments
+    author_name = request.args.get('author_name')
+    article_name = request.args.get('article_name')
+    theme = request.args.get('theme')
+    status = request.args.get('status')
+    search_query = request.args.get('search')
+    sort_by_date = request.args.get('sort_by_date', 'latest')
+    
+    # Build the query for fetching papers based on filters
+    query = Paper.query
+    
+    if author_name:
+        query = query.filter(Paper.author.contains(author_name))
+    if article_name:
+        query = query.filter(Paper.title.contains(article_name))
+    if search_query:
+        query = query.filter(Paper.title.contains(search_query) | Paper.content.contains(search_query))
+    if theme:
+        query = query.filter(Paper.theme == theme)
+
+    if sort_by_date == 'latest':
+        query = query.order_by(Paper.submission_date.desc())
+    elif sort_by_date == 'oldest':
+        query = query.order_by(Paper.submission_date.asc())
+
+    if status:
+        query = query.filter(Paper.status == status)
+    
+    papers = query.all()
+    
+    return render_template('admins_dashboard.html', papers=papers)
+
+@app.route('/paper/<int:paper_id>', methods=['GET', 'POST'])
+def paper_detail(paper_id):
+    paper = Paper.query.get_or_404(paper_id)
+    
+    if request.method == 'POST':
+        status = request.form['status']
+        paper.status = status
+        db.session.commit()
+        flash('Status updated successfully!', 'success')
+    
+    return render_template('paper_detail.html', paper=paper)
+
+@app.route('/paper/<int:paper_id>/add_review', methods=['POST'])
+def add_review(paper_id):
+    paper = Paper.query.get_or_404(paper_id)
+    
+    if request.method == 'POST':
+        review_content = request.form['review']
+        new_review = Review(content=review_content, paper_id=paper.id, reviewer_id=current_user.id)
+        db.session.add(new_review)
+        db.session.commit()
+        flash('Review added successfully!', 'success')
+    
+    return redirect(url_for('paper_detail', paper_id=paper.id))
+
+
 
 
 if __name__ == '__main__':

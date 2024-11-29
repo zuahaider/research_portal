@@ -21,8 +21,13 @@
 
     <!-- Search and Filter Form -->
     <form method="GET" action="{{ url_for('research_page') }}">
-        <input type="text" name="search" placeholder="Search by title, author, keyword" value="{{ request.args.get('search', '') }}">
+        <input type="text" name="search" placeholder="Search by title or keyword" value="{{ request.args.get('search', '') }}">
+        <label for="article_name">Article Name:</label>
+        <input type="text" id="article_name" name="article_name" value="{{ request.args.get('article_name') }}">
         
+        <label for="author">Author:</label>
+        <input type="text" name="author" placeholder="Author name" value="{{ request.args.get('author', '') }}">
+
         <label for="theme">Theme:</label>
         <select name="theme">
             <option value="">All</option>
@@ -40,28 +45,18 @@
         <button type="submit">Search</button>
     </form>
 
-    <!-- Published Papers Table -->
+    <!-- Published Papers List -->
     {% if papers %}
-    <table border="1">
-        <thead>
-            <tr>
-                <th>Title</th>
-                <th>Author</th>
-                <th>Theme</th>
-                <th>Publish Date</th>
-            </tr>
-        </thead>
-        <tbody>
+        <div class="papers-list">
             {% for paper in papers %}
-            <tr>
-                <td>{{ paper.title }}</td>
-                <td>{{ paper.author.first_name }} {{ paper.author.last_name }}</td>
-                <td>{{ paper.theme }}</td>
-                <td>{{ paper.publish_date.strftime('%Y-%m-%d') }}</td>
-            </tr>
+                <div class="paper-item">
+                    <h3><a href="{{ url_for('view_paper', paper_id=paper.id) }}">{{ paper.title }}</a></h3>
+                    <p><strong>Author:</strong> {{ paper.author.first_name }} {{ paper.author.last_name }}</p>
+                    <p><strong>Theme:</strong> {{ paper.theme }}</p>
+                    <p><strong>Publish Date:</strong> {{ paper.publish_date.strftime('%Y-%m-%d') }}</p>
+                </div>
             {% endfor %}
-        </tbody>
-    </table>
+        </div>
     {% else %}
         <p>No published papers found.</p>
     {% endif %}

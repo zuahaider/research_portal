@@ -3,15 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Home Dashboard</title>
+    <title>Research Papers</title>
 </head>
 <body>
     <h1>Published Research Papers</h1>
 
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <ul>
+                {% for category, message in messages %}
+                    <li class="flash-{{ category }}">{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+
     <!-- Search and Filter Form -->
     <form method="GET" action="{{ url_for('my_home') }}">
-        <input type="text" name="search" placeholder="Search by title, author, keyword" value="{{ request.args.get('search', '') }}">
-        
+        <input type="text" name="search" placeholder="Search by title or keyword" value="{{ request.args.get('search', '') }}">
+        <label for="article_name">Article Name:</label>
+        <input type="text" id="article_name" name="article_name" value="{{ request.args.get('article_name') }}">
+
+
+        <label for="author">Author:</label>
+        <input type="text" name="author" placeholder="Author name" value="{{ request.args.get('author', '') }}">
+
         <label for="theme">Theme:</label>
         <select name="theme">
             <option value="">All</option>
@@ -29,33 +46,25 @@
         <button type="submit">Search</button>
     </form>
 
-    <!-- Published Papers Table -->
+    <!-- Published Papers List -->
     {% if papers %}
-    <table border="1">
-        <thead>
-            <tr>
-                <th>Title</th>
-                <th>Author</th>
-                <th>Theme</th>
-                <th>Publish Date</th>
-            </tr>
-        </thead>
-        <tbody>
+        <div class="papers-list">
             {% for paper in papers %}
-            <tr>
-                <td>{{ paper.title }}</td>
-                <td>{{ paper.author.first_name }} {{ paper.author.last_name }}</td>
-                <td>{{ paper.theme }}</td>
-                <td>{{ paper.publish_date.strftime('%Y-%m-%d') }}</td>
-                <td><a href="{{ url_for('view_paper', paper_id=paper.id) }}">Read</a></td>
-            </tr>
+                <div class="paper-item">
+                    <h3><a href="{{ url_for('view_paper', paper_id=paper.id) }}">{{ paper.title }}</a></h3>
+                    <p><strong>Author:</strong> {{ paper.author.first_name }} {{ paper.author.last_name }}</p>
+                    <p><strong>Theme:</strong> {{ paper.theme }}</p>
+                    <p><strong>Publish Date:</strong> {{ paper.publish_date.strftime('%Y-%m-%d') }}</p>
+                </div>
             {% endfor %}
-        </tbody>
-    </table>
+        </div>
     {% else %}
         <p>No published papers found.</p>
     {% endif %}
 
-        <p>See you paper progress and submit a paper here. <a href="{{ url_for('my_profile') }}">My Profile</a></p>
+    <!-- My Profile Access -->
+    <p>See you paper progress and submit a paper here. <a href="{{ url_for('my_profile') }}">My Profile</a></p>
 </body>
+</html>
+        
     

@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ paper.title }}</title>
+</head>
+<body>
+    <h1>{{ paper.title }}</h1>
+
+    <p><strong>Author:</strong> {{ paper.author.first_name }} {{ paper.author.last_name }}</p>
+    <p><strong>Publish Date:</strong> {{ paper.publish_date.strftime('%Y-%m-%d') }}</p>
+    <p><strong>Theme:</strong> {{ paper.theme }}</p>
+
+    <hr>
+
+    <h2>Abstract</h2>
+    <p>{{ paper.abstract }}</p> <!-- Assuming there's an abstract field in your Paper model -->
+
+    <h2>Full Paper</h2>
+    <p>{{ paper.content }}</p> <!-- Assuming paper content is stored as plain text -->
+
+    <hr>
+
+    <!-- Optionally, if you want a back button to return to the list of papers -->
+    <a href="{{ url_for('research_page') }}">Back to Paper List</a>
+
+    {% if current_user.is_authenticated %}
+        <p>Welcome, {{ current_user.first_name }}! <a href="{{ url_for('profile') }}">My Profile</a> | <a href="{{ url_for('logout') }}">Logout</a></p>
+    {% else %}
+        <p>You need to be logged in to view your profile. <a href="{{ url_for('login') }}">Login</a> | <a href="{{ url_for('register') }}">Register</a></p>
+    {% endif %}
+</body>
+</html>

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ paper.title }}</title>
+</head>
+<body>
+    <h1>{{ paper.title }}</h1>
+    <p><strong>Author:</strong> {{ paper.author.first_name }} {{ paper.author.last_name }}</p>
+    <p><strong>Submission Date:</strong> {{ paper.submit_date.strftime('%Y-%m-%d') }}</p>
+    {% if paper.status == 'published' %}
+    <p><strong>Published Date:</strong> {{ paper.publish_date.strftime('%Y-%m-%d') }}</p>
+    {% endif %}
+    
+    <h2>Status</h2>
+    <form method="POST" action="{{ url_for('update_paper_status', paper_id=paper.id) }}">
+        <label for="status">Status:</label>
+        <select id="status" name="status">
+            <option value="needs_reviewer" {% if paper.status == 'needs_reviewer' %} selected {% endif %}>Needs Reviewer</option>
+            <option value="under_review" {% if paper.status == 'under_review' %} selected {% endif %}>Under Review</option>
+            <option value="needs_revision" {% if paper.status == 'needs_revision' %} selected {% endif %}>Needs Revision</option>
+            <option value="being_resubmitted" {% if paper.status == 'being_resubmitted' %} selected {% endif %}>Being Resubmitted</option>
+            <option value="rejected" {% if paper.status == 'rejected' %} selected {% endif %}>Rejected</option>
+            <option value="approved" {% if paper.status == 'approved' %} selected {% endif %}>Approved</option>
+            <option value="published" {% if paper.status == 'published' %} selected {% endif %}>Published</option>
+        </select>
+        <button type="submit">Update Status</button>
+    </form>
+
+    <h2>Reviews</h2>
+    <p>Reviews received: {{ paper.reviews.count() }}/3</p>
+    {% if paper.status == 'under_review' %}
+    <form method="POST" action="{{ url_for('add_review', paper_id=paper.id) }}">
+        <textarea name="review" placeholder="Enter your review"></textarea>
+        <button type="submit">Submit Review</button>
+    </form>
+    {% endif %}
+
+    <h3>Reviewers</h3>
+    <p>Researcher: {{ paper.researcher.email }}</p>
+    {% for reviewer in paper.reviewers %}
+    <p>Reviewer: {{ reviewer.email }}</p>
+    {% endfor %}
+
+    {% if paper.status == 'needs_reviewer' %}
+    <form method="POST" action="{{ url_for('assign_reviewers', paper_id=paper.id) }}">
+        <button type="submit">Assign Reviewers</button>
+    </form>
+    {% endif %}
+
+    <hr>
+    <p><a href="{{ url_for('admin_dashboard') }}">Back to Dashboard</a></p>
+</body>
+</html>

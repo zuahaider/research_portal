@@ -6,10 +6,21 @@
     <title>My Profile</title>
 </head>
 <body>
-    <h1>Welcome to your Profile</h1> 
-    <p>To keep a track of your paper progress. <a href="{{ url_for('my_progress') }}">My Progress</a></p>
-    <p>To Submit a paper. <a href="{{ url_for('submit_paper') }}">Submit a paper</a></p>
-    <p>To check your Drafts. <a href="{{ url_for('drafts') }}">My Drafts</a></p>
+    <h1>Welcome to your profile {{ user.first_name }}</h1>
+    
+    <!-- Show admin dashboard only for admins -->
+    {% if user.role == 'admin' %}
+    <p>Keep a track of all papers and users in the system. <a href="{{ url_for('admins_dashboard') }}">Admin's Dashboard</a></p>
+    {% endif %}
+
+    <!-- Show My Progress only for researchers/reviewers -->
+    {% if user.role in ['researcher', 'reviewer'] %}
+    <p>Track your paper's progress here. <a href="{{ url_for('my_dashboard') }}">My Dashboard</a></p>
+    {% endif %}
+
+    <!-- Common options for all users -->
+    <p>Submit a paper here. <a href="{{ url_for('submit_paper') }}">Submit a paper</a></p>
+    <p>Find your drafts here. <a href="{{ url_for('drafts') }}">My Drafts</a></p>
+    <a href="/logout">Logout</a>
 </body>
 </html>
-
