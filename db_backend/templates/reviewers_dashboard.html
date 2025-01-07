@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reviewer's Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        .header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px;
+            text-align: right;
+            font-size: 24px;
+        }
+         
+
+        .writer-name {
+            font-size: 18px;
+            color: #333;
+            margin-top: 30px; 
+            margin-bottom: 20px;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .search-bar {
+            width: 300px;
+            padding: 10px;
+            margin-bottom: 20px;
+            font-size: 16px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            outline: none;
+        }
+
+        .search-bar:focus {
+            border-color: #3498db;
+        }
+
+        .article-list {
+            width: 80%;
+            max-width: 800px;
+        }
+
+        .article-item {
+            background-color: white;
+            margin-bottom: 15px;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .article-item h3 {
+            margin: 0;
+            font-size: 20px;
+            color: #333;
+        }
+
+        .article-item p {
+            font-size: 14px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        Review's Dashboard
+    </div>
+     
+    <div class="writer-name">
+        Austin William
+    </div>
+    <div class="container">
+        <!-- Search Bar -->
+        <input type="text" class="search-bar" placeholder="Hinted Search text">
+
+       <!-- Article List -->
+        <div class="article-list">
+            <div class="article-item">
+                <h3></h3>
+          Descriptions duis aute irure dolor in reprehenderit in voluptate velit
+                <p>today.23 min</p>
+            </div>
+
+            <div class="article-item">
+                <h3>Title</h3>
+          Descriptions duis aute irure dolor in reprehenderit in voluptate velit
+                 <p>today.23 min</p>
+                
+               </div>
+
+            <div class="article-item">
+                <h3>Article name</h3>
+          Descriptions duis aute irure dolor in reprehenderit in voluptate velit
+                <p>today.23 min</p>       
+            </div>
+
+            <!-- More articles can be added here -->
+        </div>
+    </div>
+
+</body>
+</html>

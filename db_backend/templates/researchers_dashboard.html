@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Writer's Dashboard</title>
+</head>
+    <body>
+        <h1>Welcome to Writer's Dashboard</h1>
+        
+        <!-- Submitted Papers Collapsible -->
+        <div class="collapsible">
+            <h2>Submitted Papers</h2>
+            <span class="arrow">▼</span>
+        </div>
+        <div class="content">
+            <!-- Filter Form -->
+            <form method="GET" action="{{ url_for('admins_dashboard') }}">
+                <label for="author_name">Author Name:</label>
+                <input type="text" id="author_name" name="author_name" value="{{ request.args.get('author_name') }}">
+                
+                <label for="article_name">Article Name:</label>
+                <input type="text" id="article_name" name="article_name" value="{{ request.args.get('article_name') }}">
+                <input type="text" name="search" placeholder="Search by title or keyword" value="{{ request.args.get('search', '') }}">
+    
+                <label for="theme">Theme:</label>
+                <select id="theme" name="theme">
+                    <option value="">All</option>
+                    <option value="social" {% if request.args.get('theme') == 'social' %} selected {% endif %}>Social</option>
+                    <option value="natural" {% if request.args.get('theme') == 'natural' %} selected {% endif %}>Natural</option>
+                    <option value="formal_science" {% if request.args.get('theme') == 'formal_science' %} selected {% endif %}>Formal Science</option>
+                </select>
+    
+                <label for="status">Status:</label>
+                <select id="status" name="status">
+                    <option value="">All</option>
+                    <option value="needs_reviewer" {% if request.args.get('status') == 'needs_reviewer' %} selected {% endif %}>Needs Reviewer</option>
+                    <option value="under_review" {% if request.args.get('status') == 'under_review' %} selected {% endif %}>Under Review</option>
+                    <option value="needs_revision" {% if request.args.get('status') == 'needs_revision' %} selected {% endif %}>Needs Revision</option>
+                    <option value="being_resubmitted" {% if request.args.get('status') == 'being_resubmitted' %} selected {% endif %}>Being Resubmitted</option>
+                    <option value="rejected" {% if request.args.get('status') == 'rejected' %} selected {% endif %}>Rejected</option>
+                    <option value="approved" {% if request.args.get('status') == 'approved' %} selected {% endif %}>Approved</option>
+                    <option value="published" {% if request.args.get('status') == 'published' %} selected {% endif %}>Published</option>
+                </select>
+                 
+                <label for="sort_by_date">Sort by Date:</label>
+                <select name="sort_by_date">
+                    <option value="latest" {% if request.args.get('sort_by_date') == 'latest' %}selected{% endif %}>Latest</option>
+                    <option value="oldest" {% if request.args.get('sort_by_date') == 'oldest' %}selected{% endif %}>Oldest</option>
+                </select>
+    
+                <button type="submit">Filter</button>
+            </form>
+    
+            <!-- List of Papers -->
+            <ul>
+                {% for paper in papers %}
+                <li>
+                    <strong>{{ paper.title }}</strong><br>
+                    <em>{{ paper.author.first_name }} {{ paper.author.last_name }}</em><br>
+                    <small>Submission Date: {{ paper.submit_date.strftime('%Y-%m-%d') }}</small><br>
+                    {% if paper.status == 'published' %}
+                    <small>Publish Date: {{ paper.publish_date.strftime('%Y-%m-%d') }}</small><br>
+                    {% endif %}
+                    <a href="{{ url_for('view_paper', paper_id=paper.id) }}">View Paper</a>
+                </li>
+                {% else %}
+                <p>No papers found.</p>
+                {% endfor %}
+            </ul>
+        </div>   
+    </body> 

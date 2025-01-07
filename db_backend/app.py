@@ -47,6 +47,11 @@ class Paper(db.Model):
     status = db.Column(db.String(100), default="draft")  
     pdf_filename = db.Column(db.String(255), nullable=True)  # Optional
     reviewers = db.relationship('Review', backref='paper', lazy=True)
+    old_version_id = db.Column(db.Integer, db.ForeignKey('paper.id'), nullable=True)  # Link to the old version
+    description = db.Column(db.String(500), nullable=True)  # New column for short description
+
+    # Relationship to track old version
+    old_version = db.relationship('Paper', remote_side=[id], backref='resubmitted_paper')
 
     def __repr__(self):
         return f'<Paper {self.title}>'
@@ -56,7 +61,7 @@ class Review(db.Model):
     __tablename__ = 'review'
     id = db.Column(db.Integer, primary_key=True)
     review_text = db.Column(db.Text, nullable=True)
-    status = db.Column(db.String(100), default="pending")  # e.g., pending, completed
+    status = db.Column(db.String(100), default="pending")  # e.g., pending, received
     reviewer_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     paper_id = db.Column(db.Integer, db.ForeignKey('paper.id'), nullable=False)
     review_date = db.Column(db.Date, default=datetime.utcnow)
@@ -70,7 +75,7 @@ class ReviewerAssignment(db.Model):
     assignment_id = db.Column(db.Integer, primary_key=True)
     paper_id = db.Column(db.Integer, db.ForeignKey('paper.id'), nullable=False)
     reviewer_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    status = db.Column(db.String, default="assigned")
+    status = db.Column(db.String, default="not assigned") #not assigned
 
     def __repr__(self):
         return f'<ReviewerAssignment {self.assignment_id}>'
@@ -100,7 +105,21 @@ class Draft(db.Model):
     def __repr__(self):
         return f'<Draft {self.title}>'
 
-from flask import render_template, request, redirect, url_for, flash, session
+# Notification Model
+class Notification(db.Model):
+    __tablename__ = 'notification'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    message = db.Column(db.String(500), nullable=False)
+    status = db.Column(db.String(100), default="unread")  # unread or read
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship('User', backref='notifications')
+
+    def __repr__(self):
+        return f'<Notification {self.id}>'
+
+from flask import render_template, request, redirect, url_for, flash, session, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 
@@ -304,6 +323,40 @@ def my_profile():
 @app.route('/my_dashboard')
 def my_dashboard():
    return render_template('my_dashboard.html')
+#user roles each one sees differently 
+#upon clicking researchers board 
+
+@app.route('/mypaper_status')
+def mypaper_status():
+   return render_template('mypaper_status.html')
+#viewonly cant edit
+#researchers only or reseracher+reviewers
+
+
+@app.route('/reviews_received')
+def reviews_received():
+   return render_template('reviews_received.html')
+#viewonly cant edit
+#researchers only or reseracher+reviewers
+#if old version/any paper same thing 
+
+
+@app.route('/reviewers_dashboard')
+def reviewers_dashboard():
+   return render_template('reviewers_dashboard.html')
+#reviewers only or reseracher+reviewers
+
+
+@app.route('/assigned_papers')
+def assigned_papers():
+   return render_template('assigned_papers.html')
+#reviewers only or reseracher+reviewers
+
+@app.route('/reviewing_page')
+def reviewing_page():
+   return render_template('reviewing_page.html')
+#reviewers only or reseracher+reviewers
+#editable only as long as paper status==under review, needs revision
 
 @app.route('/submit_paper', methods=['GET', 'POST'])
 def submit_paper():
@@ -311,6 +364,7 @@ def submit_paper():
         # Extract form fields
         title = request.form.get('title')
         theme = request.form.get('theme')
+        description=request.form.get('description')
         content = request.form.get('content')  # Content from CKEditor
         action = request.form.get('action')  # Determines whether to submit or save as draft
 
@@ -343,6 +397,7 @@ def submit_paper():
         new_paper = Paper(
             title=title,
             theme=theme,
+            description=description,
             content=content,
             author_id=current_user.id,
             status=status,
@@ -365,11 +420,114 @@ def submit_paper():
 
     # If GET request, render the form
     return render_template('submit_paper.html')
+
+@app.route('/resubmit_paper/<int:paper_id>', methods=['POST'])
+@login_required
+def resubmit_paper(paper_id):
+    paper = Paper.query.get_or_404(paper_id)
+    if paper.status != "needs amendments":
+        flash("This paper cannot be resubmitted.", "error")
+        return redirect(url_for('my_profile'))
+
+    new_version = Paper(
+        title=paper.title,
+        theme=paper.theme,
+        content=paper.content,
+        author_id=current_user.id,
+        status="needs reviewer",
+        old_version_id=paper.id,
+        pdf_filename=paper.pdf_filename
+    )
+    try:
+        paper.status = "archived"  # Mark old paper as archived
+        db.session.add(new_version)
+        db.session.commit()
+        flash("Paper resubmitted successfully!", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error resubmitting paper: {e}", "error")
+
+    return redirect(url_for('my_profile'))
+
+'''
+# Optionally, create a notification for the author
+    notification = Notification(user_id=paper.author_id, message="Your paper has been resubmitted as an old version.")
+    db.session.add(notification)
+    db.session.commit()
+
+    return "Paper resubmitted successfully."
+
+
+    # Create a notification for the author
+    notification = Notification(user_id=paper.author_id, message="Your paper has been resubmitted and marked as an old version.")
+    db.session.add(notification)
+    db.session.commit()
+'''
+
+@app.route('/mypaper_status2')
+def mypaper_status2():
+   return render_template('mypaper_status2.html')
+#researchers only or res+rev
+
+'''
+@app.route('/reviews_received')
+def reviews_received():
+   return render_template('reviews_received.html')
+#viewonly cant edit
+#researchers only 
+#if old version/any paper same thing 
+'''
+
+@app.route('/assigned_papers2')
+def assigned_papers2():
+   return render_template('assigned_papers2.html')
+#reviewers only or researcher+reviewer
+
+@app.route('/reviewing_page2')
+def reviewing_page2():
+   return render_template('reviewing_page2.html')
+#reviewers only or reseracher+reviewers
+#undeitable version
+#for all status: old version, approved, published, rejected
+#excpet for: under review, needs revision
+
+@app.route('/notifications')
+def notifications():
+    user = User.query.get(current_user.id)  # Assuming you're using Flask-Login for user session
+    unread_notifications = Notification.query.filter_by(user_id=user.id, status="unread").all()
     
+    # Optionally, mark notifications as read when viewed
+    for notification in unread_notifications:
+        notification.status = "read"
+    db.session.commit()
+
+    return render_template('notifications.html', notifications=unread_notifications)
+
 @app.route('/drafts')
 def drafts():
     drafts = Paper.query.filter_by(author_id=current_user.id, status="draft").all()
     return render_template('drafts.html', drafts=drafts)
+
+@app.route('/submit-draft/<int:draft_id>', methods=['POST'])
+def submit_draft(draft_id):
+    draft = Draft.query.get(draft_id)
+    if not draft:
+        return jsonify({"error": "Draft not found."}), 404
+
+    # Convert draft to paper
+    paper = Paper(
+        title=draft.title,
+        content=draft.content,
+        author_id=draft.author_id,
+        theme=draft.theme,
+        submission_date=datetime.utcnow(),
+        status="draft"
+    )
+    db.session.add(paper)
+    db.session.delete(draft)  # Remove the draft after submission
+    db.session.commit()
+    return jsonify({"message": "Draft submitted successfully.", "paper_id": paper.id}), 200
+
 
 @app.route('/edit_draft/<int:paper_id>', methods=['GET', 'POST'])
 def edit_draft(paper_id):
@@ -448,6 +606,26 @@ def admins_dashboard():
     
     return render_template('admins_dashboard.html', papers=papers)
 
+@app.route('/paper_overview', methods=['GET'])
+def paper_overview():
+    return render_template(paper_overview.html)
+
+@app.route('/admin_review', methods=['GET'])
+def admin_review():
+    return render_template(admin_review.html)
+
+@app.route('/final_review', methods=['GET'])
+def final_review():
+    return render_template(final_review.html)
+
+@app.route('/assign_reviewer', methods=['GET'])
+def assign_reviewer():
+    return render_template(assign_reviewer.html)
+
+@app.route('/view_userdetails', methods=['GET'])
+def view_userdetails():
+    return render_template(view_userdetails.html)
+
 @app.route('/paper/<int:paper_id>', methods=['GET', 'POST'])
 def paper_detail(paper_id):
     paper = Paper.query.get_or_404(paper_id)
@@ -473,7 +651,39 @@ def add_review(paper_id):
     
     return redirect(url_for('paper_detail', paper_id=paper.id))
 
+def assign_reviewer(paper_id, reviewer_id):
+    # Create a notification for the reviewer
+    notification = Notification(user_id=reviewer_id, message=f"You have been assigned to review the paper {paper_id}.")
+    db.session.add(notification)
+    db.session.commit()
 
+def update_paper_status(paper_id, new_status):
+    paper = Paper.query.get(paper_id)
+    paper.status = new_status
+    db.session.commit()
+
+    # Create a notification for the author
+    notification = Notification(user_id=paper.author_id, message=f"Your paper status has been updated to {new_status}.")
+    db.session.add(notification)
+    db.session.commit()
+
+@app.route('/notifications/<int:user_id>', methods=['GET'])
+def get_notifications(user_id):
+    notifications = Notification.query.filter_by(user_id=user_id, status="unread").all()
+    return jsonify([{
+        "id": n.id,
+        "message": n.message,
+        "timestamp": n.timestamp
+    } for n in notifications])
+
+@app.route('/notifications/mark-as-read/<int:notification_id>', methods=['POST'])
+def mark_notification_as_read(notification_id):
+    notification = Notification.query.get(notification_id)
+    if notification:
+        notification.status = "read"
+        db.session.commit()
+        return jsonify({"message": "Notification marked as read."}), 200
+    return jsonify({"error": "Notification not found."}), 404
 
 
 if __name__ == '__main__':

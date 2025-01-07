@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        .header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px;
+            text-align: right;
+            font-size: 24px;
+        }
+
+        .writer-name {
+            font-size: 18px;
+            color: #333;
+            margin-top: 30px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .assigned-papers {
+            background-color: white;
+            width: 80%;
+            max-width: 800px;
+            padding: 20px;
+            margin-top: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .assigned-papers h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .article-name {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .paper-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+        }
+
+        .detail-box {
+            background-color: #ecf0f1;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .status {
+            background-color: #ecf0f1; 
+            color: black;
+        }
+
+        .reviewers {
+            background-color: #ecf0f1; 
+            color:black;
+        }
+        .user id {
+         background-color: white;
+         color: black
+         }
+         .underreview {
+         background-color: white;
+         color: black
+         }
+         .not added {
+         background-color: green;
+         color: white
+         }
+         </style>
+</head>
+<body>
+ <div class="header">
+      Assigned Papers
+    </div>
+        <div class="assigned-papers">
+            <div class="article-item">
+                <h3>Article name</h3>
+          Descriptions duis aute irure dolor in reprehenderit in voluptate velit
+          
+          
+                <p>today.23 min</p>       
+            </div>
+
+            <div class="paper-details">
+                <div class="detail-box">
+                    <p><strong>Researcher ID:</strong></p>
+                 </div>
+
+                <!-- Status -->
+                <div class="detail-box status">
+                    <p><strong>Status:</strong></p>
+                   
+                </div>
+
+                <!-- Reviewers -->
+                <div class="detail-box reviewers">
+                    <p><strong>Reviewers:</strong></p>
+                    
+            </div>
+            <div class =".user_id">
+            <p><strong>User_id</strong></p>
+        </div>
+        <div class =".underreview">
+            <p><strong>underreview</strong></p>
+        </div>
+        <div class =".not added">
+            <p><strong>not added</strong></p>
+        </div>
+        
+    </div>
+
+</body>
+</html>
